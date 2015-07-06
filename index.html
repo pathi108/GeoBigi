@@ -1,0 +1,94 @@
+<html>
+<head>
+<script src="shp.js"></script>
+<script src="topojson.js"></script>
+<script src="colorbrewer.js"></script>
+<script src="jquery-2.1.3.js"></script>
+<script src="d3.js" charset="utf-8"></script>
+<script src="shp.min.js"></script>
+<script >
+
+function lo(){
+shp("USA_adm.zip").then(function(geojson){
+	//console.log(geojson[0]);
+  var width =  1000, // width of the square
+     height = 1000; //height of the square 
+
+var projection = d3.geo.equirectangular()
+    .scale(500)
+    .center([ -100,50])
+    .precision(.1);
+//console.log(geojson[1]);
+var path = d3.geo.path()
+    .projection(projection);
+
+d3.csv("us-ag-productivity-2004.csv", function(data){
+   var color = d3.scale.quantize()
+                    .range(["rgb(237,248,233)", "rgb(186,228,179)",
+                     "rgb(116,196,118)", "rgb(49,163,84)","rgb(0,109,44)"]).domain([
+                d3.min(data, function(d) { return d.value; }),
+                d3.max(data, function(d) { return d.value; })
+        ]);
+    for (var i = 0; i < data.length; i++) {
+            var dataState = data[i].state;
+            var dataValue = parseFloat(data[i].value);
+            for (var j = 0; j < geojson[1].features.length; j++) {
+            var jsonState = d3.values(geojson[1].features[j].properties);
+            //console.log(jsonState);
+            if (dataState == jsonState[4]) { 
+                geojson[1].features[j].properties.value = dataValue;
+                break;
+            }
+        }   
+    }
+   // console.log(jsonState[4]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+    console.log("Hi");
+svg.selectAll("path")
+        .data(geojson[1].features)
+        .enter()
+        .append("path")
+        .attr("d", path)
+        .style("fill", function(d) {
+                                var value = d.properties.value;
+                                //console.log(value);
+                                if (value) {
+                                    console.log("Ok");
+                                        return color(value);
+                                } else {
+                                    console.log("NO");
+                                        return "yellow";
+                                }
+                   }).style("stroke-width", ".5")
+                     .style("stroke", "black");
+
+        svg.selectAll('path').on("click",function() 
+            { 
+                console.log(this[0]);
+                console.log("clicked");
+                d3.select(this).style({fill : 'green'});
+
+                 });
+
+console.log("Bye");
+
+    
+    });
+
+     
+    });
+
+}
+
+</script>
+</head>
+
+<body id="dem">
+<input type="submit" onClick="lo()">ok</input>
+<p id="demo"></p>
+
+</body>
+</html>
